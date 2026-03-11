@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SneakerStore — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────── RESET ─────────────────── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{overflow-x:hidden;-webkit-text-size-adjust:100%}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+
+/* ─────────────────── SWITCHER ─────────────────── */
+.plan-switcher{position:fixed;top:0;left:0;right:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #1a1a1a;height:46px}
+.plan-switcher span{color:#444;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:0 12px}
+@media(max-width:480px){.plan-switcher span{display:none}}
+.plan-btn{padding:0 20px;height:46px;border:none;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;transition:all .25s;background:transparent;color:#444;border-bottom:2px solid transparent}
+@media(max-width:480px){.plan-btn{padding:0 14px;font-size:9px;letter-spacing:1px}}
+.plan-btn:hover{color:#888}
+.plan-btn[data-plan="basic"].active{color:#aaa;border-bottom-color:#555}
+.plan-btn[data-plan="inter"].active{color:#c9a84c;border-bottom-color:#c9a84c}
+.plan-btn[data-plan="premium"].active{color:#e8c4a0;border-bottom-color:#e8c4a0}
+.plan-view{display:none}
+.plan-view.active{display:block}
+
+/* ─────────────────── SHARED MARQUEE ─────────────────── */
+.marquee-track{overflow:hidden;white-space:nowrap;padding:13px 0}
+.marquee-inner{display:inline-block;animation:marqueeAnim 22s linear infinite}
+.marquee-inner span{display:inline-block;padding:0 24px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:5px}
+@keyframes marqueeAnim{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─────────────────── MODALS ─────────────────── */
+.modal-overlay{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);padding:16px}
+.modal-overlay.open{display:flex}
+.modal-close{position:absolute;top:14px;right:16px;background:transparent;border:none;color:#666;font-size:20px;cursor:pointer;z-index:10;line-height:1;transition:color .2s;padding:4px 8px}
+.modal-close:hover{color:#fff}
+
+/* product modal */
+.product-modal{width:min(680px,100%);max-height:90vh;overflow-y:auto;position:relative}
+.product-modal-inner{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:600px){.product-modal-inner{grid-template-columns:1fr}}
+.product-modal-img{aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.product-modal-img img{width:85%;height:85%;object-fit:contain;position:relative;z-index:1}
+.product-modal-img-label{position:absolute;bottom:12px;left:12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;font-family:'Space Mono',monospace}
+.product-modal-info{padding:32px 26px;display:flex;flex-direction:column;gap:14px}
+@media(max-width:600px){.product-modal-info{padding:24px 20px}}
+.pm-brand{font-size:9px;letter-spacing:3px;text-transform:uppercase;font-family:'Space Mono',monospace}
+.pm-name{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;line-height:1}
+.pm-price{font-family:'Space Mono',monospace;font-size:20px}
+.pm-desc{font-size:13px;line-height:1.7;color:#888}
+.pm-sizes-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:8px}
+.pm-sizes{display:flex;gap:6px;flex-wrap:wrap}
+.pm-size{width:38px;height:38px;border:1px solid;background:transparent;font-size:11px;cursor:pointer;transition:all .2s;font-family:'Space Mono',monospace}
+.pm-actions{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.pm-btn-pay,.pm-btn-cart{padding:13px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;transition:all .2s}
+
+/* pasarela */
+.pasarela-modal{width:min(440px,100%);padding:36px;position:relative}
+@media(max-width:480px){.pasarela-modal{padding:28px 22px}}
+.pas-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;margin-bottom:6px}
+.pas-sub{font-size:11px;letter-spacing:1px;margin-bottom:20px;font-family:'Space Mono',monospace}
+.pas-secure{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:20px;color:#555}
+.pas-secure::before{content:'🔒';font-size:11px}
+.pas-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:'Space Mono',monospace;margin-bottom:5px;color:#666}
+.pas-input{width:100%;padding:12px 14px;font-size:13px;font-family:'Space Mono',monospace;outline:none;transition:border-color .2s;margin-bottom:16px}
+.pas-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pas-total{padding:13px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.pas-total-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;font-family:'Space Mono',monospace}
+.pas-total-amount{font-family:'Space Mono',monospace;font-size:16px;font-weight:700}
+.pas-pay-btn{width:100%;padding:15px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;transition:all .2s}
+.pas-card-preview{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:11px 14px}
+.pas-card-chip{width:30px;height:22px;background:linear-gradient(135deg,#c9a84c,#f0d080);border-radius:3px;flex-shrink:0}
+.pas-card-num{font-family:'Space Mono',monospace;font-size:12px;color:#777;letter-spacing:2px}
+.spinner{width:16px;height:16px;border:2px solid #333;border-top-color:#aaa;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pas-loading{display:none;justify-content:center;align-items:center;gap:10px;padding:10px 0}
+.pas-loading span{font-size:11px;letter-spacing:2px;font-family:'Space Mono',monospace}
+
+/* despacho */
+.despacho-modal{width:min(400px,100%);padding:40px;text-align:center;position:relative}
+.despacho-check{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px}
+.desp-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:3px;margin-bottom:8px}
+.desp-sub{font-size:13px;line-height:1.7;margin-bottom:28px;color:#777}
+.desp-order{padding:14px;margin-bottom:24px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.desp-wa-btn{width:100%;background:#25D366;color:#fff;border:none;padding:16px;font-size:13px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s}
+.desp-wa-btn:hover{background:#1db954}
+
+/* cart panel */
+.cart-panel{position:fixed;right:0;top:46px;bottom:0;width:min(380px,100vw);z-index:9000;border-left:1px solid;transform:translateX(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94);display:flex;flex-direction:column}
+.cart-panel.open{transform:translateX(0)}
+.cart-panel-header{padding:20px 22px;border-bottom:1px solid;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.cart-panel-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px}
+.cart-close{background:transparent;border:none;font-size:20px;cursor:pointer;transition:color .2s;line-height:1;padding:4px}
+.cart-items{flex:1;overflow-y:auto;padding:14px 22px}
+.cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'Space Mono',monospace;gap:10px;opacity:.4}
+.cart-empty::before{content:'🛒';font-size:32px;filter:grayscale(1)}
+.cart-item{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid}
+.cart-item-img{width:52px;height:52px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cart-item-img img{width:100%;height:100%;object-fit:contain}
+.cart-item-name{font-size:12px;margin-bottom:3px}
+.cart-item-price{font-family:'Space Mono',monospace;font-size:11px}
+.cart-item-size{font-size:10px;letter-spacing:1px;margin-top:2px;opacity:.5}
+.cart-item-remove{background:none;border:none;font-size:15px;cursor:pointer;transition:color .2s;padding:4px;opacity:.4}
+.cart-item-remove:hover{opacity:1;color:#ff4444}
+.cart-footer{padding:20px 22px;border-top:1px solid;flex-shrink:0}
+.cart-total-row{display:flex;justify-content:space-between;margin-bottom:16px}
+.cart-total-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:'Space Mono',monospace;opacity:.5}
+.cart-total-amount{font-family:'Space Mono',monospace;font-size:17px;font-weight:700}
+.cart-checkout-btn{width:100%;padding:14px;border:none;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+.cart-count{border-radius:50%;width:15px;height:15px;font-size:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;transition:transform .2s;flex-shrink:0}
+
+/* ═══════════════════════════════════════════
+   PLAN BÁSICO
+═══════════════════════════════════════════ */
+#plan-basic{background:#0a0a0a;color:#e0e0e0;font-family:'DM Sans',sans-serif;min-height:100vh;padding-top:46px}
+/* nav */
+.basic-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid #1a1a1a;background:#0a0a0a;position:sticky;top:46px;z-index:100;gap:16px}
+@media(max-width:768px){.basic-nav{padding:14px 18px}}
+.basic-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:4px;color:#fff}
+.basic-nav-links{display:flex;gap:24px;list-style:none}
+@media(max-width:768px){.basic-nav-links{display:none}}
+.basic-nav-links a{color:#666;text-decoration:none;font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:color .2s}
+.basic-nav-links a:hover{color:#fff}
+.basic-cart-btn{background:#fff;color:#000;border:none;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#cart-basic{background:#0d0d0d;border-left-color:#1f1f1f;color:#e0e0e0}
+#cart-basic .cart-panel-title{color:#fff}
+#cart-basic .cart-close{color:#555}
+#cart-basic .cart-close:hover{color:#fff}
+#cart-basic .cart-item{border-bottom-color:#1a1a1a}
+#cart-basic .cart-footer{border-top-color:#1a1a1a}
+#cart-basic .cart-panel-header{border-bottom-color:#1a1a1a}
+#cart-basic .cart-count{background:#ff3b30;color:#fff}
+#cart-basic .cart-checkout-btn{background:#fff;color:#000}
+#cart-basic .cart-checkout-btn:hover{background:#e0e0e0}
+/* hero */
+.basic-hero{padding:60px 32px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1200px;margin:0 auto}
+@media(max-width:768px){.basic-hero{grid-template-columns:1fr;padding:40px 18px;gap:32px}}
+.basic-hero-badge{display:inline-block;background:#1a1a1a;color:#666;font-size:9px;letter-spacing:3px;text-transform:uppercase;padding:5px 11px;margin-bottom:18px;font-family:'Space Mono',monospace}
+.basic-hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,7vw,84px);line-height:.92;letter-spacing:2px;color:#fff;margin-bottom:18px}
+.basic-hero h1 span{color:#3a3a3a}
+.basic-hero p{color:#555;font-size:14px;line-height:1.8;margin-bottom:28px;max-width:360px}
+.basic-cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.basic-btn-primary{background:#fff;color:#000;border:none;padding:12px 24px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:background .2s}
+.basic-btn-primary:hover{background:#ddd}
+.basic-btn-secondary{color:#555;font-size:11px;letter-spacing:1px;text-transform:uppercase;background:none;border:none;text-decoration:underline;font-family:'DM Sans',sans-serif}
+.basic-hero-img{aspect-ratio:1;background:#0f0f0f;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.basic-hero-img::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 60% 40%,#1e1e1e,#0a0a0a 70%)}
+.basic-hero-img img{width:75%;height:75%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 20px 40px rgba(0,0,0,.8))}
+/* marquee basic */
+#plan-basic .marquee-track{background:#111}
+#plan-basic .marquee-inner span{color:#333}
+/* products */
+.basic-products{padding:44px 32px;max-width:1200px;margin:0 auto}
+@media(max-width:768px){.basic-products{padding:36px 18px}}
+.basic-section-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;color:#fff;margin-bottom:3px}
+.basic-section-sub{color:#3a3a3a;font-size:10px;margin-bottom:28px;letter-spacing:1px;font-family:'Space Mono',monospace}
+.basic-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+@media(max-width:900px){.basic-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.basic-grid{grid-template-columns:repeat(2,1fr)}}
+.basic-card{background:#111;overflow:hidden;cursor:pointer;transition:transform .2s}
+.basic-card:hover{transform:translateY(-3px)}
+.basic-card-img{aspect-ratio:.85;background:#161616;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:transform .3s;padding:16px}
+.basic-card:hover .basic-card-img{transform:scale(1.03)}
+.basic-card-img img{width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
+.basic-card-info{padding:12px 14px 14px}
+.basic-card-brand{font-size:8px;color:#3a3a3a;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;font-family:'Space Mono',monospace}
+.basic-card-name{font-size:12px;font-weight:500;color:#ccc;margin-bottom:6px}
+.basic-card-price{font-family:'Space Mono',monospace;font-size:13px;color:#fff;margin-bottom:9px}
+.basic-card-btn{width:100%;background:transparent;border:1px solid #1f1f1f;color:#555;padding:8px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+.basic-card-btn:hover{background:#fff;color:#000;border-color:#fff}
+/* footer basic */
+.basic-footer{padding:32px;border-top:1px solid #1a1a1a;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+@media(max-width:600px){.basic-footer{flex-direction:column;text-align:center;padding:24px 18px}}
+.basic-footer-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:#222}
+.basic-footer p{color:#333;font-size:10px}
+.basic-wa-float{position:fixed;bottom:24px;left:20px;background:#25D366;color:#fff;border:none;border-radius:50px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(37,211,102,.3);z-index:500;transition:transform .2s}
+.basic-wa-float:hover{transform:translateY(-2px)}
+/* basic modal styling */
+#modal-product-basic .product-modal{background:#111;border:1px solid #1f1f1f}
+#modal-product-basic .product-modal-img{background:#161616}
+#modal-product-basic .pm-brand{color:#555}
+#modal-product-basic .pm-name{color:#fff}
+#modal-product-basic .pm-price{color:#fff}
+#modal-product-basic .pm-size{border-color:#222;color:#666}
+#modal-product-basic .pm-size:hover,#modal-product-basic .pm-size.sel{background:#fff;color:#000;border-color:#fff}
+#modal-product-basic .pm-btn-pay{background:#fff;color:#000}
+#modal-product-basic .pm-btn-pay:hover{background:#ddd}
+#modal-product-basic .pm-btn-cart{background:transparent;color:#666;border:1px solid #222}
+#modal-product-basic .pm-btn-cart:hover{border-color:#888;color:#fff}
+/* basic pasarela */
+#modal-pasarela-basic .pasarela-modal{background:#0d0d0d;border:1px solid #1f1f1f}
+#modal-pasarela-basic .pas-title{color:#fff}
+#modal-pasarela-basic .pas-sub{color:#555}
+#modal-pasarela-basic .pas-input{background:#1a1a1a;border:1px solid #222;color:#fff}
+#modal-pasarela-basic .pas-input:focus{border-color:#555}
+#modal-pasarela-basic .pas-total{background:#1a1a1a}
+#modal-pasarela-basic .pas-total-amount{color:#fff}
+#modal-pasarela-basic .pas-card-preview{background:#141414;border:1px solid #222}
+#modal-pasarela-basic .pas-pay-btn{background:#fff;color:#000}
+#modal-pasarela-basic .pas-pay-btn:hover{background:#ddd}
+/* despacho basic */
+#modal-despacho-basic .despacho-modal{background:#0d0d0d;border:1px solid #1f1f1f}
+#modal-despacho-basic .despacho-check{background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3)}
+#modal-despacho-basic .desp-title{color:#fff}
+#modal-despacho-basic .desp-order{background:#141414;color:#555}
+#modal-despacho-basic .desp-order span{color:#fff}
+
+/* ═══════════════════════════════════════════
+   PLAN INTERMEDIO
+═══════════════════════════════════════════ */
+#plan-inter{background:#f5f0e8;color:#1a1a1a;font-family:'DM Sans',sans-serif;min-height:100vh;padding-top:46px}
+.inter-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:#1a1a1a;position:sticky;top:46px;z-index:100;gap:16px}
+@media(max-width:768px){.inter-nav{padding:14px 18px}}
+.inter-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:6px;color:#c9a84c}
+.inter-nav-links{display:flex;gap:28px;list-style:none}
+@media(max-width:768px){.inter-nav-links{display:none}}
+.inter-nav-links a{color:#aaa;text-decoration:none;font-size:10px;letter-spacing:2px;text-transform:uppercase;transition:color .2s}
+.inter-nav-links a:hover{color:#c9a84c}
+.inter-cart-btn{background:#c9a84c;color:#000;border:none;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#cart-inter{background:#0d0d0d;border-left-color:#2a2200;color:#e0e0e0}
+#cart-inter .cart-panel-title{color:#c9a84c}
+#cart-inter .cart-close{color:#555}
+#cart-inter .cart-close:hover{color:#c9a84c}
+#cart-inter .cart-item{border-bottom-color:#1a1a1a}
+#cart-inter .cart-footer{border-top-color:#1a1a1a}
+#cart-inter .cart-panel-header{border-bottom-color:#1a1a1a}
+#cart-inter .cart-count{background:#c9a84c;color:#000}
+#cart-inter .cart-checkout-btn{background:#c9a84c;color:#000}
+#cart-inter .cart-checkout-btn:hover{background:#b8903c}
+/* hero inter */
+.inter-hero{display:grid;grid-template-columns:1.2fr .8fr;min-height:480px;overflow:hidden}
+@media(max-width:768px){.inter-hero{grid-template-columns:1fr}}
+.inter-hero-left{background:#1a1a1a;padding:64px 48px;position:relative;overflow:hidden}
+@media(max-width:768px){.inter-hero-left{padding:48px 24px}}
+.inter-hero-left::before{content:'KICKS';position:absolute;bottom:-24px;right:-16px;font-family:'Bebas Neue',sans-serif;font-size:160px;color:#222;line-height:1;letter-spacing:-4px;pointer-events:none;z-index:0}
+.inter-eyebrow{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#c9a84c;margin-bottom:16px;position:relative;z-index:1}
+.inter-hero-left h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,96px);line-height:.88;color:#f5f0e8;letter-spacing:2px;position:relative;z-index:1;margin-bottom:22px}
+.inter-hero-left h1 em{font-style:italic;color:#c9a84c}
+.inter-hero-left p{color:#888;font-size:13px;line-height:1.7;max-width:320px;position:relative;z-index:1;margin-bottom:28px}
+.inter-hero-btns{display:flex;gap:12px;position:relative;z-index:1;flex-wrap:wrap}
+.inter-btn-gold{background:#c9a84c;color:#000;border:none;padding:12px 24px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.inter-btn-outline{background:transparent;color:#f5f0e8;border:1px solid #444;padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;transition:all .2s}
+.inter-btn-outline:hover{border-color:#c9a84c;color:#c9a84c}
+.inter-hero-right{background:#f5f0e8;display:grid;grid-template-rows:1fr 1fr}
+@media(max-width:768px){.inter-hero-right{display:none}}
+.inter-hero-stat{padding:32px;border-bottom:1px solid #e0d9cc;display:flex;flex-direction:column;justify-content:center}
+.inter-hero-stat:last-child{border-bottom:none}
+.inter-stat-num{font-family:'Bebas Neue',sans-serif;font-size:56px;color:#1a1a1a;line-height:1;letter-spacing:2px}
+.inter-stat-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#bbb;margin-top:3px}
+/* marquee inter */
+#plan-inter .marquee-track{background:#c9a84c}
+#plan-inter .marquee-inner span{color:#1a1a1a}
+/* products inter */
+.inter-products{padding:64px 40px;background:#f5f0e8}
+@media(max-width:768px){.inter-products{padding:44px 18px}}
+.inter-products-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px;flex-wrap:wrap;gap:16px}
+.inter-products-title{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:3px;color:#1a1a1a;line-height:1}
+.inter-products-sub{font-size:10px;color:#bbb;letter-spacing:1px;margin-top:3px}
+.inter-filter-tabs{display:flex;gap:3px;flex-wrap:wrap}
+.inter-filter-tab{padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:#bbb;transition:all .2s}
+.inter-filter-tab.active,.inter-filter-tab:hover{background:#1a1a1a;color:#fff}
+.inter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.inter-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.inter-grid{grid-template-columns:repeat(2,1fr)}}
+.inter-card{background:#fff;overflow:hidden;cursor:pointer;transition:transform .3s,box-shadow .3s;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.inter-card:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(0,0,0,.1)}
+.inter-card-img{aspect-ratio:.85;background:#f0ebe0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:transform .4s;padding:16px}
+.inter-card:hover .inter-card-img{transform:scale(1.05)}
+.inter-card-img img{width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}
+.inter-card-badge{position:absolute;top:8px;left:8px;background:#c9a84c;color:#000;font-size:8px;font-weight:700;letter-spacing:1px;padding:3px 7px;text-transform:uppercase}
+.inter-card-info{padding:12px 14px 14px}
+.inter-card-brand{font-size:8px;color:#c9a84c;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:3px;font-family:'Space Mono',monospace}
+.inter-card-name{font-size:13px;font-weight:500;color:#1a1a1a;margin-bottom:9px}
+.inter-card-bottom{display:flex;justify-content:space-between;align-items:center}
+.inter-card-price{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:#1a1a1a}
+.inter-card-add{background:#1a1a1a;color:#fff;border:none;width:32px;height:32px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0}
+.inter-card-add:hover{background:#c9a84c;color:#000}
+/* feature inter */
+.inter-feature{background:#1a1a1a;display:grid;grid-template-columns:1fr 1fr;min-height:340px}
+@media(max-width:768px){.inter-feature{grid-template-columns:1fr}}
+.inter-feature-content{padding:64px 48px}
+@media(max-width:768px){.inter-feature-content{padding:44px 24px}}
+.inter-feature-content h2{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:3px;color:#f5f0e8;line-height:.9;margin-bottom:14px}
+.inter-feature-content h2 span{color:#c9a84c;display:block}
+.inter-feature-content p{color:#666;font-size:13px;line-height:1.7;margin-bottom:24px;max-width:340px}
+.inter-wa-btn{background:#25D366;color:#fff;border:none;padding:13px 24px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;display:inline-flex;align-items:center;gap:8px}
+.inter-feature-visual{background:#222;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:24px}
+@media(max-width:768px){.inter-feature-visual{display:none}}
+.inter-feature-visual img{width:70%;height:auto;object-fit:contain;filter:drop-shadow(0 10px 30px rgba(0,0,0,.5))}
+.inter-footer{background:#111;padding:36px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+@media(max-width:600px){.inter-footer{flex-direction:column;text-align:center;padding:28px 18px}}
+.inter-footer-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:6px;color:#c9a84c}
+.inter-footer p{color:#444;font-size:10px}
+/* inter modals */
+#modal-product-inter .product-modal{background:#1a1a1a;border:1px solid #2a2a2a}
+#modal-product-inter .product-modal-img{background:#222}
+#modal-product-inter .pm-brand{color:#c9a84c}
+#modal-product-inter .pm-name{color:#fff}
+#modal-product-inter .pm-price{color:#c9a84c}
+#modal-product-inter .pm-size{border-color:#333;color:#777}
+#modal-product-inter .pm-size:hover,#modal-product-inter .pm-size.sel{background:#c9a84c;color:#000;border-color:#c9a84c}
+#modal-product-inter .pm-btn-pay{background:#c9a84c;color:#000}
+#modal-product-inter .pm-btn-pay:hover{background:#b8903c}
+#modal-product-inter .pm-btn-cart{background:transparent;color:#777;border:1px solid #333}
+#modal-product-inter .pm-btn-cart:hover{border-color:#c9a84c;color:#c9a84c}
+#modal-pasarela-inter .pasarela-modal{background:#0d0d0d;border:1px solid #1f1f1f}
+#modal-pasarela-inter .pas-title{color:#c9a84c}
+#modal-pasarela-inter .pas-sub{color:#555}
+#modal-pasarela-inter .pas-input{background:#1a1a1a;border:1px solid #222;color:#fff}
+#modal-pasarela-inter .pas-input:focus{border-color:#c9a84c}
+#modal-pasarela-inter .pas-total{background:#1a1a1a}
+#modal-pasarela-inter .pas-total-amount{color:#c9a84c}
+#modal-pasarela-inter .pas-card-preview{background:#141414;border:1px solid #222}
+#modal-pasarela-inter .pas-pay-btn{background:#c9a84c;color:#000}
+#modal-pasarela-inter .pas-pay-btn:hover{background:#b8903c}
+#modal-despacho-inter .despacho-modal{background:#0d0d0d;border:1px solid #1f1f1f}
+#modal-despacho-inter .despacho-check{background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3)}
+#modal-despacho-inter .desp-title{color:#fff}
+#modal-despacho-inter .desp-order{background:#141414;color:#555}
+#modal-despacho-inter .desp-order span{color:#c9a84c}
+
+/* ═══════════════════════════════════════════
+   PLAN PREMIUM
+═══════════════════════════════════════════ */
+#plan-premium{background:#080806;color:#d4cfc6;font-family:'DM Sans',sans-serif;min-height:100vh;padding-top:46px}
+.prem-nav{display:flex;align-items:center;justify-content:space-between;padding:0 44px;height:58px;background:#080806;position:sticky;top:46px;z-index:100;border-bottom:1px solid #1a1a15;gap:16px}
+@media(max-width:768px){.prem-nav{padding:0 18px}}
+.prem-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:10px;color:#d4cfc6;text-transform:uppercase}
+.prem-nav-links{display:flex;gap:32px;list-style:none}
+@media(max-width:768px){.prem-nav-links{display:none}}
+.prem-nav-links a{color:#3a3a2e;text-decoration:none;font-size:9px;letter-spacing:3px;text-transform:uppercase;transition:color .2s}
+.prem-nav-links a:hover{color:#d4cfc6}
+.prem-cart-btn{background:transparent;border:1px solid #2a2a20;color:#888;padding:7px 16px;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.prem-cart-btn:hover{border-color:#888;color:#d4cfc6}
+#cart-premium{background:#080806;border-left-color:#1a1a15;color:#d4cfc6}
+#cart-premium .cart-panel-title{color:#d4cfc6;font-family:'Cormorant Garamond',serif;font-weight:300;letter-spacing:4px}
+#cart-premium .cart-close{color:#3a3a2e}
+#cart-premium .cart-close:hover{color:#d4cfc6}
+#cart-premium .cart-item{border-bottom-color:#1a1a15}
+#cart-premium .cart-footer{border-top-color:#1a1a15}
+#cart-premium .cart-panel-header{border-bottom-color:#1a1a15}
+#cart-premium .cart-count{background:#e8c4a0;color:#0d0d08}
+#cart-premium .cart-checkout-btn{background:#e8c4a0;color:#0d0d08}
+#cart-premium .cart-checkout-btn:hover{background:#d4b08c}
+#cart-premium .cart-item-name{color:#c8c3ba}
+/* hero premium */
+.prem-hero{min-height:calc(100vh - 104px);position:relative;overflow:hidden;display:flex;align-items:flex-end}
+@media(max-width:768px){.prem-hero{min-height:70vh}}
+.prem-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 40%,rgba(180,155,100,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 80% at 20% 80%,rgba(100,90,60,.05) 0%,transparent 50%),#080806}
+.prem-hero-visual{position:absolute;right:0;top:0;bottom:0;width:55%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+@media(max-width:768px){.prem-hero-visual{width:100%;opacity:.2}}
+.prem-hero-shoe-img{width:72%;height:auto;object-fit:contain;filter:drop-shadow(0 30px 60px rgba(0,0,0,.9)) sepia(.15) brightness(.95);transform:rotate(-12deg) translateX(5%);animation:heroFloat 6s ease-in-out infinite}
+@keyframes heroFloat{0%,100%{transform:rotate(-12deg) translateX(5%) translateY(0)}50%{transform:rotate(-10deg) translateX(5%) translateY(-18px)}}
+.prem-hero-content{position:relative;z-index:2;padding:0 44px 72px;max-width:520px}
+@media(max-width:768px){.prem-hero-content{padding:0 18px 56px;max-width:100%}}
+.prem-hero-issue{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:4px;text-transform:uppercase;color:#3a3a2e;margin-bottom:28px;display:flex;align-items:center;gap:14px}
+.prem-hero-issue::after{content:'';flex:1;max-width:56px;height:1px;background:#2a2a20}
+.prem-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(56px,8vw,104px);font-weight:300;line-height:.9;color:#d4cfc6;letter-spacing:-1px;margin-bottom:24px}
+.prem-hero h1 em{font-style:italic;color:#e8c4a0;display:block}
+.prem-hero-desc{font-size:13px;color:#3a3a2e;line-height:1.9;max-width:360px;margin-bottom:38px;letter-spacing:.3px}
+.prem-hero-cta{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.prem-btn-main{background:#e8c4a0;color:#0d0d08;border:none;padding:14px 32px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:10px;letter-spacing:3px;text-transform:uppercase;transition:all .2s}
+.prem-btn-main:hover{background:#d4b08c}
+.prem-btn-text{background:none;border:none;color:#3a3a2e;font-size:10px;letter-spacing:3px;text-transform:uppercase;font-family:'DM Sans',sans-serif;transition:color .2s}
+.prem-btn-text:hover{color:#d4cfc6}
+.prem-hero-scroll{position:absolute;bottom:28px;right:44px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px}
+@media(max-width:768px){.prem-hero-scroll{display:none}}
+.prem-hero-scroll span{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:#2a2a20;font-family:'Space Mono',monospace;writing-mode:vertical-rl}
+.prem-hero-scroll::after{content:'';width:1px;height:44px;background:linear-gradient(to bottom,#2e2e22,transparent)}
+/* numbers */
+.prem-numbers{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #1a1a15;border-bottom:1px solid #1a1a15}
+@media(max-width:600px){.prem-numbers{grid-template-columns:repeat(2,1fr)}}
+.prem-number-item{padding:32px 28px;border-right:1px solid #1a1a15}
+.prem-number-item:last-child{border-right:none}
+@media(max-width:600px){.prem-number-item:nth-child(2n){border-right:none}.prem-number-item:nth-child(n+3){border-top:1px solid #1a1a15}}
+.prem-number-big{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;color:#d4cfc6;line-height:1;letter-spacing:-2px}
+.prem-number-big em{font-style:italic;color:#e8c4a0;font-size:.45em;vertical-align:top;margin-top:8px}
+.prem-number-label{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:#2a2a20;margin-top:4px;font-family:'Space Mono',monospace}
+/* marquee premium */
+#plan-premium .marquee-track{background:#0e0e0a;border-top:1px solid #1a1a15;border-bottom:1px solid #1a1a15}
+#plan-premium .marquee-inner span{color:#2a2a20;letter-spacing:8px}
+/* lookbook */
+.prem-lookbook{padding:72px 44px}
+@media(max-width:768px){.prem-lookbook{padding:48px 18px}}
+.prem-lookbook-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:44px;flex-wrap:wrap;gap:12px}
+.prem-lookbook-title{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:300;color:#d4cfc6;letter-spacing:2px;line-height:1.1}
+.prem-lookbook-subtitle{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:#2a2a20;font-family:'Space Mono',monospace}
+.prem-lb-grid{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:auto auto;gap:2px}
+@media(max-width:900px){.prem-lb-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto}}
+@media(max-width:480px){.prem-lb-grid{grid-template-columns:1fr}}
+.prem-lb-card{background:#0e0e0a;overflow:hidden;cursor:pointer;position:relative;transition:all .4s}
+.prem-lb-card.featured{grid-row:1/3}
+@media(max-width:900px){.prem-lb-card.featured{grid-row:auto;grid-column:1/3}}
+@media(max-width:480px){.prem-lb-card.featured{grid-column:auto}}
+.prem-lb-card:hover .prem-lb-overlay{opacity:1}
+.prem-lb-card:hover .prem-lb-img-inner{transform:scale(1.04)}
+.prem-lb-img{overflow:hidden;position:relative}
+.prem-lb-card.featured .prem-lb-img{height:560px}
+@media(max-width:768px){.prem-lb-card.featured .prem-lb-img{height:380px}}
+.prem-lb-card:not(.featured) .prem-lb-img{height:276px}
+@media(max-width:768px){.prem-lb-card:not(.featured) .prem-lb-img{height:200px}}
+.prem-lb-img-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111109;transition:transform .5s;padding:24px}
+.prem-lb-img-inner img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 16px 40px rgba(0,0,0,.8))}
+.prem-lb-card.featured .prem-lb-img-inner img{width:75%;height:75%}
+/* quick add btn on premium cards */
+.prem-lb-quick-add{position:absolute;bottom:14px;right:14px;background:#e8c4a0;color:#0d0d08;border:none;width:34px;height:34px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .3s;z-index:3}
+.prem-lb-card:hover .prem-lb-quick-add{opacity:1}
+.prem-lb-overlay{position:absolute;inset:0;background:rgba(8,8,6,.55);display:flex;align-items:flex-end;padding:20px;opacity:0;transition:opacity .3s}
+.prem-lb-overlay-btn{background:#e8c4a0;color:#0d0d08;border:none;padding:9px 20px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.prem-lb-meta{padding:18px 20px 22px}
+.prem-lb-season{font-size:7px;letter-spacing:3px;text-transform:uppercase;color:#2a2a20;font-family:'Space Mono',monospace;margin-bottom:5px}
+.prem-lb-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;color:#d4cfc6;letter-spacing:1px;margin-bottom:4px}
+.prem-lb-card.featured .prem-lb-name{font-size:26px}
+.prem-lb-price{font-family:'Space Mono',monospace;font-size:10px;color:#888}
+.prem-lb-tag{position:absolute;top:14px;left:14px;background:#e8c4a0;color:#0d0d08;font-size:7px;letter-spacing:2px;text-transform:uppercase;padding:3px 9px;font-family:'Space Mono',monospace;font-weight:700;z-index:2}
+/* strip */
+.prem-strip{border-top:1px solid #1a1a15;border-bottom:1px solid #1a1a15;padding:52px 44px;display:grid;grid-template-columns:1fr 1px 1fr;gap:44px;align-items:center}
+@media(max-width:768px){.prem-strip{grid-template-columns:1fr;padding:44px 18px;gap:36px}}
+.prem-strip-divider{background:#1a1a15;height:100%}
+@media(max-width:768px){.prem-strip-divider{display:none}}
+.prem-strip-left h2{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:#d4cfc6;line-height:.95;letter-spacing:1px;margin-bottom:18px}
+.prem-strip-left h2 em{font-style:italic;color:#e8c4a0}
+.prem-strip-left p{font-size:13px;color:#3a3a2e;line-height:1.8;max-width:380px;margin-bottom:24px}
+.prem-strip-right{display:grid;grid-template-columns:1fr 1fr;gap:1px}
+.prem-strip-feature{background:#0e0e0a;padding:24px 20px}
+.prem-strip-feature-icon{font-size:22px;margin-bottom:10px}
+.prem-strip-feature-title{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;color:#c8c3ba;margin-bottom:5px}
+.prem-strip-feature-text{font-size:10px;color:#2a2a20;line-height:1.6}
+/* footer premium */
+.prem-footer{padding:44px;border-top:1px solid #1a1a15;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+@media(max-width:600px){.prem-footer{flex-direction:column;text-align:center;padding:32px 18px}}
+.prem-footer-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:10px;color:#3a3a2e;text-transform:uppercase}
+.prem-footer p{color:#2a2a20;font-size:9px;letter-spacing:2px;font-family:'Space Mono',monospace}
+/* premium modals */
+#modal-product-premium .prem-product-modal{background:#080806;border:1px solid #1a1a15;width:min(700px,100%);max-height:90vh;overflow-y:auto;position:relative}
+.ppm-inner{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:600px){.ppm-inner{grid-template-columns:1fr}}
+.ppm-img{background:#0e0e0a;min-height:400px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:24px}
+.ppm-img img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 20px 50px rgba(0,0,0,.8))}
+.ppm-img::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(180,155,100,.05) 0%,transparent 70%)}
+.ppm-info{padding:40px 32px;display:flex;flex-direction:column;gap:16px}
+@media(max-width:600px){.ppm-info{padding:28px 22px}}
+.ppm-collection{font-size:8px;letter-spacing:4px;text-transform:uppercase;color:#2a2a20;font-family:'Space Mono',monospace}
+.ppm-name{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:#d4cfc6;line-height:.95;letter-spacing:1px}
+.ppm-price{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:#e8c4a0}
+.ppm-divider{height:1px;background:#1a1a15}
+.ppm-desc{font-size:12px;color:#3a3a2e;line-height:1.8;letter-spacing:.3px}
+.ppm-sizes{display:flex;gap:5px;flex-wrap:wrap}
+.ppm-size{width:36px;height:36px;border:1px solid #1a1a15;background:transparent;color:#3a3a2e;font-size:10px;cursor:pointer;transition:all .2s;font-family:'Space Mono',monospace}
+.ppm-size:hover,.ppm-size.sel{border-color:#e8c4a0;color:#e8c4a0}
+.ppm-actions{display:flex;flex-direction:column;gap:7px;margin-top:auto}
+.ppm-btn-pay{background:#e8c4a0;color:#0d0d08;border:none;padding:13px;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;transition:background .2s}
+.ppm-btn-pay:hover{background:#d4b08c}
+.ppm-btn-cart{background:transparent;color:#3a3a2e;border:1px solid #1a1a15;padding:13px;font-size:9px;letter-spacing:3px;text-transform:uppercase;transition:all .2s}
+.ppm-btn-cart:hover{border-color:#4a4a3e;color:#d4cfc6}
+#modal-pasarela-premium .pasarela-modal{background:#080806;border:1px solid #1a1a15}
+#modal-pasarela-premium .pas-title{color:#d4cfc6}
+#modal-pasarela-premium .pas-sub{color:#2a2a20}
+#modal-pasarela-premium .pas-input{background:#0e0e0a;border:1px solid #1a1a15;color:#d4cfc6}
+#modal-pasarela-premium .pas-input:focus{border-color:#4a4a3e}
+#modal-pasarela-premium .pas-total{background:#0e0e0a}
+#modal-pasarela-premium .pas-total-amount{color:#e8c4a0}
+#modal-pasarela-premium .pas-card-preview{background:#0e0e0a;border:1px solid #1a1a15}
+#modal-pasarela-premium .pas-pay-btn{background:#e8c4a0;color:#0d0d08}
+#modal-pasarela-premium .pas-pay-btn:hover{background:#d4b08c}
+#modal-pasarela-premium .pas-loading span{color:#3a3a2e}
+#modal-despacho-premium .despacho-modal{background:#080806;border:1px solid #1a1a15}
+#modal-despacho-premium .despacho-check{background:rgba(232,196,160,.08);border:1px solid rgba(232,196,160,.2)}
+#modal-despacho-premium .desp-title{color:#d4cfc6}
+#modal-despacho-premium .desp-order{background:#0e0e0a;color:#2a2a20}
+#modal-despacho-premium .desp-order span{color:#e8c4a0}
+</style>
+</head>
+<body>
+
+<!-- ── SWITCHER ── -->
+<div class="plan-switcher">
+  <span>Ver plan →</span>
+  <button class="plan-btn active" data-plan="basic"   onclick="switchPlan('basic')">Básico</button>
+  <button class="plan-btn"        data-plan="inter"   onclick="switchPlan('inter')">Intermedio</button>
+  <button class="plan-btn"        data-plan="premium" onclick="switchPlan('premium')">Premium</button>
+</div>
+
+<!-- ── CART PANELS ── -->
+<div id="cart-basic" class="cart-panel">
+  <div class="cart-panel-header"><div class="cart-panel-title">CARRITO</div><button class="cart-close" onclick="toggleCart('basic')">✕</button></div>
+  <div class="cart-items" id="cart-items-basic"><div class="cart-empty">Tu carrito está vacío</div></div>
+  <div class="cart-footer">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-amount" id="cart-total-basic">$0</span></div>
+    <button class="cart-checkout-btn" onclick="checkoutFromCart('basic')">Pagar ahora →</button>
+  </div>
+</div>
+<div id="cart-inter" class="cart-panel">
+  <div class="cart-panel-header"><div class="cart-panel-title">CARRITO</div><button class="cart-close" onclick="toggleCart('inter')">✕</button></div>
+  <div class="cart-items" id="cart-items-inter"><div class="cart-empty">Tu carrito está vacío</div></div>
+  <div class="cart-footer">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-amount" id="cart-total-inter">$0</span></div>
+    <button class="cart-checkout-btn" onclick="checkoutFromCart('inter')">Pagar todo →</button>
+  </div>
+</div>
+<div id="cart-premium" class="cart-panel">
+  <div class="cart-panel-header"><div class="cart-panel-title">Selección</div><button class="cart-close" onclick="toggleCart('premium')">✕</button></div>
+  <div class="cart-items" id="cart-items-premium"><div class="cart-empty">Tu selección está vacía</div></div>
+  <div class="cart-footer">
+    <div class="cart-total-row"><span class="cart-total-label">Total</span><span class="cart-total-amount" id="cart-total-premium">$0</span></div>
+    <button class="cart-checkout-btn" onclick="checkoutFromCart('premium')">Confirmar pedido →</button>
+  </div>
+</div>
+
+<!-- ── PRODUCT MODALS ── -->
+<div id="modal-product-basic" class="modal-overlay" onclick="closeOnOverlay(event,'modal-product-basic')">
+  <div class="product-modal">
+    <button class="modal-close" onclick="closeModal('modal-product-basic')">✕</button>
+    <div class="product-modal-inner">
+      <div class="product-modal-img"><img id="pm-basic-img" src="" alt=""><div class="product-modal-img-label">Vista previa</div></div>
+      <div class="product-modal-info">
+        <div class="pm-brand" id="pm-basic-brand">NIKE</div>
+        <div class="pm-name" id="pm-basic-name">Air Force 1</div>
+        <div class="pm-price" id="pm-basic-price">$280.000</div>
+        <p class="pm-desc">Disponible en múltiples tallas. Envíos a toda Colombia.</p>
+        <div><div class="pm-sizes-label">Talla</div>
+          <div class="pm-sizes" id="sizes-basic">
+            <button class="pm-size" onclick="selSize(this,'basic')">36</button><button class="pm-size" onclick="selSize(this,'basic')">37</button><button class="pm-size" onclick="selSize(this,'basic')">38</button><button class="pm-size" onclick="selSize(this,'basic')">39</button><button class="pm-size" onclick="selSize(this,'basic')">40</button><button class="pm-size" onclick="selSize(this,'basic')">41</button><button class="pm-size" onclick="selSize(this,'basic')">42</button>
+          </div>
+        </div>
+        <div class="pm-actions">
+          <button class="pm-btn-pay" onclick="openPasarela('basic')">💳 Pagar ahora</button>
+          <button class="pm-btn-cart" onclick="addToCartFromModal('basic')">+ Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-product-inter" class="modal-overlay" onclick="closeOnOverlay(event,'modal-product-inter')">
+  <div class="product-modal">
+    <button class="modal-close" onclick="closeModal('modal-product-inter')">✕</button>
+    <div class="product-modal-inner">
+      <div class="product-modal-img"><img id="pm-inter-img" src="" alt=""></div>
+      <div class="product-modal-info">
+        <div class="pm-brand" id="pm-inter-brand">NIKE</div>
+        <div class="pm-name" id="pm-inter-name">Air Force 1</div>
+        <div class="pm-price" id="pm-inter-price">$280.000</div>
+        <p class="pm-desc">Referencia en múltiples tallas. Envíos a toda Colombia.</p>
+        <div><div class="pm-sizes-label">Talla</div>
+          <div class="pm-sizes" id="sizes-inter">
+            <button class="pm-size" onclick="selSize(this,'inter')">36</button><button class="pm-size" onclick="selSize(this,'inter')">37</button><button class="pm-size" onclick="selSize(this,'inter')">38</button><button class="pm-size" onclick="selSize(this,'inter')">39</button><button class="pm-size" onclick="selSize(this,'inter')">40</button><button class="pm-size" onclick="selSize(this,'inter')">41</button><button class="pm-size" onclick="selSize(this,'inter')">42</button>
+          </div>
+        </div>
+        <div class="pm-actions">
+          <button class="pm-btn-pay" onclick="openPasarela('inter')">💳 Pagar ahora</button>
+          <button class="pm-btn-cart" onclick="addToCartFromModal('inter')">+ Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-product-premium" class="modal-overlay" onclick="closeOnOverlay(event,'modal-product-premium')">
+  <div class="prem-product-modal">
+    <button class="modal-close" style="color:#3a3a2e" onclick="closeModal('modal-product-premium')">✕</button>
+    <div class="ppm-inner">
+      <div class="ppm-img"><img id="ppm-img" src="" alt=""></div>
+      <div class="ppm-info">
+        <div class="ppm-collection" id="ppm-collection">NIKE — 2025</div>
+        <div class="ppm-name" id="ppm-name">Air Force 1</div>
+        <div class="ppm-price" id="ppm-price">$280.000</div>
+        <div class="ppm-divider"></div>
+        <p class="ppm-desc">Pieza curada. Tallas limitadas, envío prioritario a toda Colombia.</p>
+        <div><div class="ppm-collection" style="margin-bottom:8px">Talla</div>
+          <div class="ppm-sizes" id="sizes-premium">
+            <button class="ppm-size" onclick="selSize(this,'premium')">36</button><button class="ppm-size" onclick="selSize(this,'premium')">37</button><button class="ppm-size" onclick="selSize(this,'premium')">38</button><button class="ppm-size" onclick="selSize(this,'premium')">39</button><button class="ppm-size" onclick="selSize(this,'premium')">40</button><button class="ppm-size" onclick="selSize(this,'premium')">41</button><button class="ppm-size" onclick="selSize(this,'premium')">42</button>
+          </div>
+        </div>
+        <div class="ppm-actions">
+          <button class="ppm-btn-pay" onclick="openPasarela('premium')">Comprar ahora</button>
+          <button class="ppm-btn-cart" onclick="addToCartFromModal('premium')">Añadir a la selección</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PASARELA MODALS ── -->
+<div id="modal-pasarela-basic" class="modal-overlay" onclick="closeOnOverlay(event,'modal-pasarela-basic')">
+  <div class="pasarela-modal">
+    <button class="modal-close" onclick="closeModal('modal-pasarela-basic')">✕</button>
+    <div class="pas-title">CHECKOUT</div>
+    <div class="pas-sub">Pago 100% seguro</div>
+    <div class="pas-secure">Conexión cifrada SSL</div>
+    <div class="pas-total"><span class="pas-total-label">Total</span><span class="pas-total-amount" id="pas-total-basic">$280.000</span></div>
+    <div class="pas-label">Número de tarjeta</div>
+    <div class="pas-card-preview"><div class="pas-card-chip"></div><span class="pas-card-num">4242  4242  4242  4242</span></div>
+    <input class="pas-input" value="NICOLÁS GARCIA" readonly>
+    <div class="pas-row"><div><div class="pas-label">Vence</div><input class="pas-input" value="08/27" readonly></div><div><div class="pas-label">CVV</div><input class="pas-input" value="•••" readonly></div></div>
+    <div id="pas-btn-basic"><button class="pas-pay-btn" onclick="procesarPago('basic')">Pagar ahora →</button></div>
+    <div id="pas-loading-basic" class="pas-loading"><div class="spinner"></div><span>Procesando...</span></div>
+  </div>
+</div>
+<div id="modal-pasarela-inter" class="modal-overlay" onclick="closeOnOverlay(event,'modal-pasarela-inter')">
+  <div class="pasarela-modal">
+    <button class="modal-close" onclick="closeModal('modal-pasarela-inter')">✕</button>
+    <div class="pas-title">CHECKOUT</div>
+    <div class="pas-sub">Pago seguro · Wompi / PSE</div>
+    <div class="pas-secure">Conexión cifrada SSL</div>
+    <div class="pas-total"><span class="pas-total-label">Total</span><span class="pas-total-amount" id="pas-total-inter">$0</span></div>
+    <div class="pas-label">Número de tarjeta</div>
+    <div class="pas-card-preview"><div class="pas-card-chip"></div><span class="pas-card-num">4242  4242  4242  4242</span></div>
+    <input class="pas-input" value="NICOLÁS GARCIA" readonly>
+    <div class="pas-row"><div><div class="pas-label">Vence</div><input class="pas-input" value="08/27" readonly></div><div><div class="pas-label">CVV</div><input class="pas-input" value="•••" readonly></div></div>
+    <div id="pas-btn-inter"><button class="pas-pay-btn" onclick="procesarPago('inter')">Pagar →</button></div>
+    <div id="pas-loading-inter" class="pas-loading"><div class="spinner"></div><span>Procesando...</span></div>
+  </div>
+</div>
+<div id="modal-pasarela-premium" class="modal-overlay" onclick="closeOnOverlay(event,'modal-pasarela-premium')">
+  <div class="pasarela-modal">
+    <button class="modal-close" style="color:#3a3a2e" onclick="closeModal('modal-pasarela-premium')">✕</button>
+    <div class="pas-title">Confirmar pedido</div>
+    <div class="pas-sub">Pago seguro certificado</div>
+    <div class="pas-secure">Conexión cifrada SSL</div>
+    <div class="pas-total"><span class="pas-total-label">Total</span><span class="pas-total-amount" id="pas-total-premium">$280.000</span></div>
+    <div class="pas-label">Número de tarjeta</div>
+    <div class="pas-card-preview"><div class="pas-card-chip"></div><span class="pas-card-num">4242  4242  4242  4242</span></div>
+    <input class="pas-input" value="NICOLÁS GARCIA" readonly>
+    <div class="pas-row"><div><div class="pas-label">Vence</div><input class="pas-input" value="08/27" readonly></div><div><div class="pas-label">CVV</div><input class="pas-input" value="•••" readonly></div></div>
+    <div id="pas-btn-premium"><button class="pas-pay-btn" onclick="procesarPago('premium')">Confirmar →</button></div>
+    <div id="pas-loading-premium" class="pas-loading"><div class="spinner"></div><span>Procesando...</span></div>
+  </div>
+</div>
+
+<!-- ── DESPACHO MODALS ── -->
+<div id="modal-despacho-basic" class="modal-overlay" onclick="closeOnOverlay(event,'modal-despacho-basic')">
+  <div class="despacho-modal">
+    <button class="modal-close" onclick="closeModal('modal-despacho-basic')">✕</button>
+    <div class="despacho-check">✓</div>
+    <div class="desp-title">¡PAGO APROBADO!</div>
+    <p class="desp-sub">Pago procesado. Coordina tu despacho por WhatsApp.</p>
+    <div class="desp-order">Orden # <span id="desp-num-basic">KCK-20251</span><br>Estado: <span style="color:#25D366">Confirmado ✓</span></div>
+    <button class="desp-wa-btn" onclick="irAWhatsApp('basic')">💬 Gestionar despacho por WhatsApp</button>
+  </div>
+</div>
+<div id="modal-despacho-inter" class="modal-overlay" onclick="closeOnOverlay(event,'modal-despacho-inter')">
+  <div class="despacho-modal">
+    <button class="modal-close" onclick="closeModal('modal-despacho-inter')">✕</button>
+    <div class="despacho-check">✓</div>
+    <div class="desp-title">¡PAGO APROBADO!</div>
+    <p class="desp-sub">Pago procesado. Coordina tu despacho por WhatsApp.</p>
+    <div class="desp-order">Orden # <span id="desp-num-inter">KCK-20251</span><br>Estado: <span style="color:#c9a84c">Confirmado ✓</span></div>
+    <button class="desp-wa-btn" onclick="irAWhatsApp('inter')">💬 Gestionar despacho por WhatsApp</button>
+  </div>
+</div>
+<div id="modal-despacho-premium" class="modal-overlay" onclick="closeOnOverlay(event,'modal-despacho-premium')">
+  <div class="despacho-modal">
+    <button class="modal-close" style="color:#3a3a2e" onclick="closeModal('modal-despacho-premium')">✕</button>
+    <div class="despacho-check">✓</div>
+    <div class="desp-title">¡PAGO APROBADO!</div>
+    <p class="desp-sub">Tu pedido fue confirmado. Coordina el despacho por WhatsApp.</p>
+    <div class="desp-order">Orden # <span id="desp-num-premium">KCK-20251</span><br>Estado: <span>Confirmado ✓</span></div>
+    <button class="desp-wa-btn" onclick="irAWhatsApp('premium')">💬 Gestionar despacho por WhatsApp</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     PLAN BÁSICO
+════════════════════════════════ -->
+<div id="plan-basic" class="plan-view active">
+  <nav class="basic-nav">
+    <div class="basic-logo">KICKS</div>
+    <ul class="basic-nav-links">
+      <li><a href="#">Catálogo</a></li>
+      <li><a href="#">Nuevos</a></li>
+      <li><a href="#">Contacto</a></li>
+    </ul>
+    <button class="basic-cart-btn" onclick="toggleCart('basic')">
+      🛒 Carrito <span class="cart-count" id="count-basic">0</span>
+    </button>
+  </nav>
+
+  <div class="marquee-track">
+    <div class="marquee-inner">
+      <span>NIKE</span><span>•</span><span>ADIDAS</span><span>•</span><span>JORDAN</span><span>•</span><span>PUMA</span><span>•</span><span>NEW BALANCE</span><span>•</span><span>REEBOK</span><span>•</span><span>VANS</span><span>•</span><span>CONVERSE</span><span>•</span><span>ASICS</span><span>•</span><span>FILA</span><span>•</span>
+      <span>NIKE</span><span>•</span><span>ADIDAS</span><span>•</span><span>JORDAN</span><span>•</span><span>PUMA</span><span>•</span><span>NEW BALANCE</span><span>•</span><span>REEBOK</span><span>•</span><span>VANS</span><span>•</span><span>CONVERSE</span><span>•</span><span>ASICS</span><span>•</span><span>FILA</span><span>•</span>
+    </div>
+  </div>
+
+  <section class="basic-hero">
+    <div class="basic-hero-content">
+      <div class="basic-hero-badge">Nueva colección 2025</div>
+      <h1>LOS <span>MEJORES</span><br>SNEAKERS</h1>
+      <p>Más de 400 referencias. Envíos a todo Colombia con pago contraentrega.</p>
+      <div class="basic-cta">
+        <button class="basic-btn-primary" onclick="document.querySelector('.basic-products').scrollIntoView({behavior:'smooth'})">Ver Catálogo</button>
+        <button class="basic-btn-secondary">WhatsApp →</button>
+      </div>
+    </div>
+    <div class="basic-hero-img">
+      <img src="https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b7d9211d-1775-4db7-841e-f77474bcd101/air-force-1-07-shoes-WrLlWX.png" alt="Nike AF1"
+        onerror="this.style.fontSize='100px';this.style.lineHeight='1';this.textContent='👟';this.tagName!=='DIV'&&(this.outerHTML='<span style=\'font-size:100px;opacity:.5;position:relative;z-index:1\'>👟</span>')">
+    </div>
+  </section>
+
+  <section class="basic-products">
+    <div class="basic-section-title">CATÁLOGO</div>
+    <p class="basic-section-sub">400+ referencias disponibles</p>
+    <div class="basic-grid" id="basic-grid"></div>
+  </section>
+
+  <footer class="basic-footer">
+    <div class="basic-footer-logo">KICKS</div>
+    <p>Envíos a todo Colombia • Pago contraentrega</p>
+    <span style="color:#222;font-size:10px;font-family:'Space Mono',monospace">v1.0</span>
+  </footer>
+  <button class="basic-wa-float">💬 WhatsApp</button>
+</div>
+
+
+<!-- ════════════════════════════════
+     PLAN INTERMEDIO
+════════════════════════════════ -->
+<div id="plan-inter" class="plan-view">
+  <nav class="inter-nav">
+    <div class="inter-logo">KICKS</div>
+    <ul class="inter-nav-links">
+      <li><a href="#">Hombre</a></li><li><a href="#">Dama</a></li><li><a href="#">Marcas</a></li><li><a href="#">Promociones</a></li>
+    </ul>
+    <div class="inter-nav-actions">
+      <button class="inter-cart-btn" onclick="toggleCart('inter')">🛒 Carrito <span class="cart-count" id="count-inter">0</span></button>
+    </div>
+  </nav>
+
+  <section class="inter-hero">
+    <div class="inter-hero-left">
+      <div class="inter-eyebrow">✦ Colección Exclusiva 2025</div>
+      <h1>ESTILO<br><em>SIN</em><br>LÍMITES</h1>
+      <p>Las mejores referencias de sneakers premium directo a tu puerta.</p>
+      <div class="inter-hero-btns">
+        <button class="inter-btn-gold" onclick="document.querySelector('.inter-products').scrollIntoView({behavior:'smooth'})">Ver Catálogo</button>
+        <button class="inter-btn-outline">Nuestras Marcas →</button>
+      </div>
+    </div>
+    <div class="inter-hero-right">
+      <div class="inter-hero-stat"><div class="inter-stat-num">400+</div><div class="inter-stat-label">Referencias</div></div>
+      <div class="inter-hero-stat"><div class="inter-stat-num">100K</div><div class="inter-stat-label">Clientes satisfechos</div></div>
+    </div>
+  </section>
+
+  <div class="marquee-track">
+    <div class="marquee-inner">
+      <span>NIKE</span><span>•</span><span>ADIDAS</span><span>•</span><span>JORDAN</span><span>•</span><span>PUMA</span><span>•</span><span>NEW BALANCE</span><span>•</span><span>REEBOK</span><span>•</span><span>VANS</span><span>•</span><span>CONVERSE</span><span>•</span><span>ASICS</span><span>•</span><span>VEJA</span><span>•</span><span>FILA</span><span>•</span>
+      <span>NIKE</span><span>•</span><span>ADIDAS</span><span>•</span><span>JORDAN</span><span>•</span><span>PUMA</span><span>•</span><span>NEW BALANCE</span><span>•</span><span>REEBOK</span><span>•</span><span>VANS</span><span>•</span><span>CONVERSE</span><span>•</span><span>ASICS</span><span>•</span><span>VEJA</span><span>•</span><span>FILA</span><span>•</span>
+    </div>
+  </div>
+
+  <section class="inter-products">
+    <div class="inter-products-header">
+      <div><div class="inter-products-title">CATÁLOGO</div><div class="inter-products-sub">Filtra por categoría</div></div>
+      <div class="inter-filter-tabs">
+        <button class="inter-filter-tab active">Todos</button>
+        <button class="inter-filter-tab">Hombre</button>
+        <button class="inter-filter-tab">Dama</button>
+        <button class="inter-filter-tab">Oferta</button>
+      </div>
+    </div>
+    <div class="inter-grid" id="inter-grid"></div>
+  </section>
+
+  <section class="inter-feature">
+    <div class="inter-feature-content">
+      <h2>PAGA<br><span>FÁCIL</span></h2>
+      <p>Tarjetas, PSE, Nequi, contraentrega. Tu compra protegida.</p>
+      <button class="inter-wa-btn">💬 Hablar por WhatsApp</button>
+    </div>
+    <div class="inter-feature-visual">
+      <img src="https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b7d9211d-1775-4db7-841e-f77474bcd101/air-force-1-07-shoes-WrLlWX.png" alt="Sneaker">
+    </div>
+  </section>
+  <footer class="inter-footer">
+    <div class="inter-footer-logo">KICKS</div>
+    <p>© 2025 • Envíos a todo Colombia</p>
+    <div style="display:flex;gap:8px;font-size:20px">💳 📦 ✅</div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════
+     PLAN PREMIUM
+════════════════════════════════ -->
+<div id="plan-premium" class="plan-view">
+  <nav class="prem-nav">
+    <div class="prem-logo">Kicks</div>
+    <ul class="prem-nav-links">
+      <li><a href="#">Hombre</a></li><li><a href="#">Dama</a></li><li><a href="#">Marcas</a></li><li><a href="#">Editorial</a></li>
+    </ul>
+    <button class="prem-cart-btn" onclick="toggleCart('premium')">
+      Selección <span class="cart-count" id="count-premium">0</span>
+    </button>
+  </nav>
+
+  <section class="prem-hero">
+    <div class="prem-hero-bg"></div>
+    <div class="prem-hero-visual">
+      <img class="prem-hero-shoe-img"
+        src="https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b7d9211d-1775-4db7-841e-f77474bcd101/air-force-1-07-shoes-WrLlWX.png"
+        alt="Sneaker"
+        onerror="this.style.display='none'">
+    </div>
+    <div class="prem-hero-content">
+      <div class="prem-hero-issue">Vol. 12 — Colección 2025</div>
+      <h1>El arte<br>de <em>caminar</em><br>distinto.</h1>
+      <p class="prem-hero-desc">Cada par, una declaración. Curado con criterio para quienes entienden que el estilo no se improvisa.</p>
+      <div class="prem-hero-cta">
+        <button class="prem-btn-main" onclick="document.querySelector('.prem-lookbook').scrollIntoView({behavior:'smooth'})">Explorar colección</button>
+        <button class="prem-btn-text">Ver lookbook →</button>
+      </div>
+    </div>
+    <div class="prem-hero-scroll"><span>Scroll</span></div>
+  </section>
+
+  <div class="prem-numbers">
+    <div class="prem-number-item"><div class="prem-number-big">400<em>+</em></div><div class="prem-number-label">Referencias</div></div>
+    <div class="prem-number-item"><div class="prem-number-big">48<em>h</em></div><div class="prem-number-label">Entrega Bogotá</div></div>
+    <div class="prem-number-item"><div class="prem-number-big">12<em>+</em></div><div class="prem-number-label">Marcas curadas</div></div>
+    <div class="prem-number-item"><div class="prem-number-big">100<em>k</em></div><div class="prem-number-label">Clientes</div></div>
+  </div>
+
+  <div class="marquee-track">
+    <div class="marquee-inner">
+      <span>NIKE</span><span>·</span><span>ADIDAS</span><span>·</span><span>JORDAN</span><span>·</span><span>VEJA</span><span>·</span><span>NEW BALANCE</span><span>·</span><span>PUMA</span><span>·</span><span>ASICS</span><span>·</span><span>REEBOK</span><span>·</span>
+      <span>NIKE</span><span>·</span><span>ADIDAS</span><span>·</span><span>JORDAN</span><span>·</span><span>VEJA</span><span>·</span><span>NEW BALANCE</span><span>·</span><span>PUMA</span><span>·</span><span>ASICS</span><span>·</span><span>REEBOK</span><span>·</span>
+    </div>
+  </div>
+
+  <section class="prem-lookbook">
+    <div class="prem-lookbook-header">
+      <div class="prem-lookbook-title">Selección<br><em style="font-style:italic;color:#e8c4a0">editorial</em></div>
+      <div class="prem-lookbook-subtitle">Temporada 2025 — Curated drops</div>
+    </div>
+    <div class="prem-lb-grid" id="prem-grid"></div>
+  </section>
+
+  <section class="prem-strip">
+    <div class="prem-strip-left">
+      <h2>Cada par,<br>una <em>historia.</em></h2>
+      <p>Más allá del producto — una curaduría de estilo que habla de quién eres.</p>
+      <button class="prem-btn-main">Ver todo el catálogo →</button>
+    </div>
+    <div class="prem-strip-divider"></div>
+    <div class="prem-strip-right">
+      <div class="prem-strip-feature"><div class="prem-strip-feature-icon">🚚</div><div class="prem-strip-feature-title">Envío rápido</div><div class="prem-strip-feature-text">48h Bogotá, 72h resto de Colombia</div></div>
+      <div class="prem-strip-feature" style="border-left:1px solid #1a1a15"><div class="prem-strip-feature-icon">💳</div><div class="prem-strip-feature-title">Pago seguro</div><div class="prem-strip-feature-text">Tarjetas, PSE, Nequi, contraentrega</div></div>
+      <div class="prem-strip-feature" style="border-top:1px solid #1a1a15"><div class="prem-strip-feature-icon">📦</div><div class="prem-strip-feature-title">Caja incluida</div><div class="prem-strip-feature-text">Presentación de lujo en cada pedido</div></div>
+      <div class="prem-strip-feature" style="border-left:1px solid #1a1a15;border-top:1px solid #1a1a15"><div class="prem-strip-feature-icon">🔄</div><div class="prem-strip-feature-title">Cambios fáciles</div><div class="prem-strip-feature-text">Gestiona tu cambio por WhatsApp</div></div>
+    </div>
+  </section>
+  <footer class="prem-footer">
+    <div class="prem-footer-logo">Kicks</div>
+    <p>© 2025 — Envíos Colombia</p>
+    <div style="color:#2a2a20;font-size:8px;font-family:'Space Mono',monospace;letter-spacing:2px">Premium Edition</div>
+  </footer>
+</div>
+
+
+<script>
+// ── PRODUCTS DATA ──────────────────────────────────────────
+// Nike CDN images — fondo transparente/blanco
+const IMGS = {
+  af1:    'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/b7d9211d-1775-4db7-841e-f77474bcd101/air-force-1-07-shoes-WrLlWX.png',
+  campus: 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/371fdab43daa47289f84ad8400a01df1_9366/Campus_00s_Shoes_Black_ID3170_01_standard.jpg',
+  aj1:    'https://static.nike.com/a/images/t_PDP_1728_v1/f_auto,q_auto:eco/93b94f1a-5ca0-4d3b-97ef-9ab16f2e1e96/air-jordan-1-mid-shoes-BpARGV.png',
+  nb990:  'https://nb.scene7.com/is/image/NB/m990gl6_nb_02_i?$pdpflexf2$&qlt=80&fmt=webp&wid=880&hei=660',
+  veja:   'https://www.veja-store.com/cdn/shop/files/V-10-B-MESH-WHITE-NAUTICO-VX0702919B-F1_1600x.jpg?v=1697535264',
+};
+
+const PRODUCTS = [
+  { brand:'Nike',        name:'Air Force 1 Low',    price:'$280.000', num:280000, img:IMGS.af1,    badge:'',       season:'Nike — SS25'         },
+  { brand:'Adidas',      name:'Campus 00s Black',   price:'$260.000', num:260000, img:IMGS.campus, badge:'Nuevo',  season:'Adidas — FW25'       },
+  { brand:'Jordan',      name:'Air Jordan 1 Mid',   price:'$320.000', num:320000, img:IMGS.aj1,    badge:'🔥 Hot', season:'Jordan — SS25'       },
+  { brand:'New Balance', name:'990v6 Grey',          price:'$290.000', num:290000, img:IMGS.nb990,  badge:'',       season:'New Balance — FW25'  },
+];
+
+// ── STATE ──────────────────────────────────────────────────
+const carts = {basic:[],inter:[],premium:[]};
+let currentProduct = {};
+
+// ── BUILD GRIDS ────────────────────────────────────────────
+function buildGrids() {
+  // Basic grid
+  const bg = document.getElementById('basic-grid');
+  bg.innerHTML = PRODUCTS.map(p => `
+    <div class="basic-card" onclick="openProduct('basic','${p.brand}','${p.name}','${p.price}',${p.num},'${p.img}')">
+      <div class="basic-card-img"><img src="${p.img}" alt="${p.name}" onerror="this.outerHTML='<span style=font-size:56px>👟</span>'"></div>
+      <div class="basic-card-info">
+        <div class="basic-card-brand">${p.brand}</div>
+        <div class="basic-card-name">${p.name}</div>
+        <div class="basic-card-price">${p.price}</div>
+        <button class="basic-card-btn" onclick="event.stopPropagation();openProduct('basic','${p.brand}','${p.name}','${p.price}',${p.num},'${p.img}')">Ver producto</button>
+      </div>
+    </div>`).join('');
+
+  // Inter grid
+  const ig = document.getElementById('inter-grid');
+  ig.innerHTML = PRODUCTS.map(p => `
+    <div class="inter-card" onclick="openProduct('inter','${p.brand}','${p.name}','${p.price}',${p.num},'${p.img}')">
+      <div class="inter-card-img">
+        <img src="${p.img}" alt="${p.name}" onerror="this.outerHTML='<span style=font-size:64px>👟</span>'">
+        ${p.badge ? `<div class="inter-card-badge">${p.badge}</div>` : ''}
+      </div>
+      <div class="inter-card-info">
+        <div class="inter-card-brand">${p.brand}</div>
+        <div class="inter-card-name">${p.name}</div>
+        <div class="inter-card-bottom">
+          <span class="inter-card-price">${p.price}</span>
+          <button class="inter-card-add" onclick="event.stopPropagation();addToCart('inter','${p.brand} ${p.name}','${p.price}',${p.num},'${p.img}')">+</button>
+        </div>
+      </div>
+    </div>`).join('');
+
+  // Premium grid
+  const pg = document.getElementById('prem-grid');
+  pg.innerHTML = PRODUCTS.map((p, i) => `
+    <div class="prem-lb-card ${i===0?'featured':''}" onclick="openProduct('premium','${p.brand}','${p.name}','${p.price}',${p.num},'${p.img}')">
+      <div class="prem-lb-img">
+        <div class="prem-lb-img-inner">
+          <img src="${p.img}" alt="${p.name}" onerror="this.outerHTML='<span style=font-size:80px>👟</span>'">
+        </div>
+        ${i===0 ? '<div class="prem-lb-tag">Featured Drop</div>' : (p.badge?`<div class="prem-lb-tag">${p.badge}</div>`:'')}
+        <button class="prem-lb-quick-add" onclick="event.stopPropagation();addToCart('premium','${p.brand} ${p.name}','${p.price}',${p.num},'${p.img}')">+</button>
+        <div class="prem-lb-overlay"><button class="prem-lb-overlay-btn">Ver detalles →</button></div>
+      </div>
+      <div class="prem-lb-meta">
+        <div class="prem-lb-season">${p.season}</div>
+        <div class="prem-lb-name">${p.name}</div>
+        <div class="prem-lb-price">${p.price}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── PLAN SWITCH ────────────────────────────────────────────
+function switchPlan(plan) {
+  document.querySelectorAll('.plan-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.plan-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('plan-'+plan).classList.add('active');
+  document.querySelector('[data-plan="'+plan+'"]').classList.add('active');
+  ['basic','inter','premium'].forEach(p=>document.getElementById('cart-'+p).classList.remove('open'));
+}
+
+// ── CART ───────────────────────────────────────────────────
+function toggleCart(plan) {
+  const panel = document.getElementById('cart-'+plan);
+  const open = panel.classList.contains('open');
+  ['basic','inter','premium'].forEach(p=>document.getElementById('cart-'+p).classList.remove('open'));
+  if(!open) panel.classList.add('open');
+}
+
+function renderCart(plan) {
+  const container = document.getElementById('cart-items-'+plan);
+  const totalEl   = document.getElementById('cart-total-'+plan);
+  const countEl   = document.getElementById('count-'+plan);
+  const items = carts[plan];
+  if(!items.length) {
+    container.innerHTML='<div class="cart-empty">Tu carrito está vacío</div>';
+    totalEl.textContent='$0';
+    if(countEl) countEl.textContent='0';
+    return;
+  }
+  let total=0;
+  container.innerHTML = items.map((item,i)=>{
+    total+=item.price;
+    return `<div class="cart-item">
+      <div class="cart-item-img"><img src="${item.img}" alt="" onerror="this.outerHTML='<span style=font-size:28px>👟</span>'"></div>
+      <div>
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">${item.priceStr}</div>
+        ${item.size?`<div class="cart-item-size">T. ${item.size}</div>`:''}
+      </div>
+      <button class="cart-item-remove" onclick="removeFromCart('${plan}',${i})">✕</button>
+    </div>`;
+  }).join('');
+  totalEl.textContent='$'+total.toLocaleString('es-CO');
+  if(countEl){countEl.textContent=items.length}
+}
+
+function addToCart(plan,name,priceStr,price,img,size) {
+  carts[plan].push({name,priceStr,price,img,size:size||null});
+  renderCart(plan);
+  const count=document.getElementById('count-'+plan);
+  if(count){count.style.transform='scale(1.5)';setTimeout(()=>count.style.transform='scale(1)',220);}
+}
+
+function removeFromCart(plan,index) {
+  carts[plan].splice(index,1);
+  renderCart(plan);
+}
+
+function addToCartFromModal(plan) {
+  const p = currentProduct;
+  const sizeEl = document.querySelector(`#sizes-${plan} button.sel`);
+  const size = sizeEl ? sizeEl.textContent : null;
+  addToCart(plan, p.name, p.priceStr, p.price, p.img, size);
+  closeModal('modal-product-'+plan);
+  setTimeout(()=>toggleCart(plan), 200);
+}
+
+function checkoutFromCart(plan) {
+  if(!carts[plan].length) return;
+  const total = carts[plan].reduce((s,i)=>s+i.price,0);
+  const totalStr = '$'+total.toLocaleString('es-CO');
+  currentProduct = {name:'Carrito', priceStr:totalStr, price:total, img:''};
+  document.getElementById('cart-'+plan).classList.remove('open');
+  document.getElementById('pas-total-'+plan).textContent=totalStr;
+  resetPasarela(plan);
+  openModal('modal-pasarela-'+plan);
+}
+
+// ── PRODUCT ────────────────────────────────────────────────
+function openProduct(plan,brand,name,priceStr,price,img) {
+  currentProduct={brand,name,priceStr,price,img};
+  if(plan==='premium') {
+    document.getElementById('ppm-collection').textContent=brand.toUpperCase()+' — 2025';
+    document.getElementById('ppm-name').textContent=name;
+    document.getElementById('ppm-price').textContent=priceStr;
+    document.getElementById('ppm-img').src=img;
+  } else {
+    document.getElementById('pm-'+plan+'-brand').textContent=brand.toUpperCase();
+    document.getElementById('pm-'+plan+'-name').textContent=name;
+    document.getElementById('pm-'+plan+'-price').textContent=priceStr;
+    document.getElementById('pm-'+plan+'-img').src=img;
+  }
+  document.getElementById('pas-total-'+plan).textContent=priceStr;
+  document.querySelectorAll('#sizes-'+plan+' button').forEach(b=>b.classList.remove('sel'));
+  openModal('modal-product-'+plan);
+}
+
+// ── PASARELA ───────────────────────────────────────────────
+function openPasarela(plan) {
+  closeModal('modal-product-'+plan);
+  resetPasarela(plan);
+  setTimeout(()=>openModal('modal-pasarela-'+plan),150);
+}
+
+function resetPasarela(plan) {
+  document.getElementById('pas-btn-'+plan).style.display='block';
+  document.getElementById('pas-loading-'+plan).style.display='none';
+}
+
+function procesarPago(plan) {
+  document.getElementById('pas-btn-'+plan).style.display='none';
+  document.getElementById('pas-loading-'+plan).style.display='flex';
+  setTimeout(()=>{
+    closeModal('modal-pasarela-'+plan);
+    const num='KCK-'+Math.floor(10000+Math.random()*90000);
+    document.getElementById('desp-num-'+plan).textContent=num;
+    carts[plan]=[];
+    renderCart(plan);
+    setTimeout(()=>openModal('modal-despacho-'+plan),150);
+  },2200);
+}
+
+function irAWhatsApp(plan) {
+  const num=document.getElementById('desp-num-'+plan).textContent;
+  const msg=encodeURIComponent('Hola! Pagué mi pedido y quiero coordinar el despacho. Orden: '+num);
+  window.open('https://wa.me/573000000000?text='+msg,'_blank');
+}
+
+// ── MODALS ─────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id) {
+  const el=document.getElementById(id);
+  if(el) el.classList.remove('open');
+  if(!document.querySelector('.modal-overlay.open')) document.body.style.overflow='';
+}
+function closeOnOverlay(e,id) { if(e.target.id===id) closeModal(id); }
+function selSize(btn,plan) {
+  document.querySelectorAll('#sizes-'+plan+' button').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+// ── FILTER TABS ────────────────────────────────────────────
+document.querySelectorAll('.inter-filter-tab').forEach(tab=>{
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.inter-filter-tab').forEach(t=>t.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ── INIT ───────────────────────────────────────────────────
+buildGrids();
+renderCart('basic');
+renderCart('inter');
+renderCart('premium');
+</script>
+</body>
+</html>
